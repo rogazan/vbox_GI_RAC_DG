@@ -1,5 +1,7 @@
 # vbox_GI_RAC_DG
-Fully automated installation of Linux, Oracle Grid, ASM, RAC and DataGuard virtualized infrastructure
+Fully automated installation of Linux, Oracle Grid, ASM, RAC and DataGuard virtualized infrastructure.
+
+Automatización completa de infraestructuras virtualizadas de Linux, Oracle Grid, ASM, RAC y DataGuard.
 
 ## Objetivo
 
@@ -9,7 +11,7 @@ Fully automated installation of Linux, Oracle Grid, ASM, RAC and DataGuard virtu
 
 ## Host de alojamiento de elementos virtuales
 
-Todo el proceso pasra alojar los sistemas virtualizados se realizará desde un ordenador PC Windows 10. En la prueba se ha utilizado una versión Windows 10 PRO 21H1 con procesador Intel i7 de 8ª GEN, 24 Gb RAM y 3 SSD de 500Gb cada uno, distribuidos del siguiente modo:
+Todo el proceso para alojar los sistemas virtualizados se realizará desde un ordenador PC Windows 10. En la prueba se ha utilizado una versión Windows 10 PRO 21H1 con procesador Intel i7 de 8ª GEN, 24 Gb RAM y 3 SSD de 500Gb cada uno, distribuidos del siguiente modo:
 
 - Disco C: Sistema operativo del host Windows y software de virtualización
 
@@ -103,17 +105,17 @@ Cada uno de los procesos ejecutará uno o varios scripts bash en las máquinas v
 Los procesos ejecutables que se proporcionan son los siguientes:
 
 | **Proceso**| **Objetivo**|
-|-------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| 0_validarParam.ps1      | Valida los parámetros del fichero de configuración|
-| 1_crearImagen.ps1       | Automatiza la instalación base Linux como modelo para las máquinas virtuales|
-| 1b_ActualizarImagen.ps1 | Actualiza el software sistema desde los repositorios de internet del disco imagen para evitar la necesidad de crear un disco imagen desde cero|
-| 2_crearCluster.ps1      | Construye la infraestructura física virtualizada: máquinas virtuales, discos compartidos y redes, e  instala piezas de software de base|
-| 3_instalarGrid.ps1      | Instala el software GI Oracle y construye un cluster sobre la infraestructura física virtualizada con dos diskGroups: DATA y FRA|
-| 4_InstalarSoftDB.ps1    | Despliega el software de base de datos en el cluster y prepara instalación de Bases de Datos RAC o Single Instance|
-| 5_CrearDBRAC.ps1        | Crea la base de datos RAC primaria sobre el cluster con almacenamiento ASM|
-| 5b_CrearDBSI.ps1        | (optativo) crea una base de datos Single Instance con almacenamiento en ASM|
-| 6_CrearStandbyRAC.ps1   | Crea una base de datos DG Standby sobre el cluster mediante RMAN|
-| 7_CrearBroker.ps1       | Crea y activa la configuración DataGuard Broker sobre las bases de datos primaria y standby|
+|---|---|
+| 0_validarParam.ps1| Valida los parámetros del fichero de configuración|
+| 1_crearImagen.ps1| Automatiza la instalación base Linux como modelo para las máquinas virtuales|
+| 1b_ActualizarImagen.ps1| Actualiza el software sistema desde los repositorios de internet del disco imagen para evitar la necesidad de crear un disco imagen desde cero|
+| 2_crearCluster.ps1| Construye la infraestructura física virtualizada: máquinas virtuales, discos compartidos y redes, e  instala piezas de software de base|
+| 3_instalarGrid.ps1| Instala el software GI Oracle y construye un cluster sobre la infraestructura física virtualizada con dos diskGroups: DATA y FRA|
+| 4_InstalarSoftDB.ps1| Despliega el software de base de datos en el cluster y prepara instalación de Bases de Datos RAC o Single Instance|
+| 5_CrearDBRAC.ps1| Crea la base de datos RAC primaria sobre el cluster con almacenamiento ASM|
+| 5b_CrearDBSI.ps1| (optativo) crea una base de datos Single Instance con almacenamiento en ASM|
+| 6_CrearStandbyRAC.ps1| Crea una base de datos DG Standby sobre el cluster mediante RMAN|
+| 7_CrearBroker.ps1| Crea y activa la configuración DataGuard Broker sobre las bases de datos primaria y standby|
 
 Además se proporcionan unas utilidades de servicio:
 
@@ -183,7 +185,7 @@ Antes de proceder a la ejecución de los procesos de instalación automatizada h
 7. Crear el fichero de definición de infraestructura. Se debe construir con los parámetros necesarios con una estructura JSON. Por defecto se llamará “params.json” y se almacenará en el mismo directorio que los programas ejecutables. Se proporciona un ejemplo junto con el software que puede ser editado con los valores que correspondan en cada instalación. Los parámetros de dicho fichero se detallan a continuación
 
 |**Parámetro**|**Descripción**|**Valores***|
-|-------------------------|------------------------------------------------------------------------------|----------------------------------------------------------------------|
+|---|---|---|
 |EVB|Ruta de instalación del software Virtual Box|Debe existir y contener el software de utilidad de VirtualBox (obtenido en Tareas previas, paso 6)|
 |RVM|Ruta en la que se instalarán las máquinas virtuales|Debe existir. Se remienda un SSD independiente|
 |RUTTEMP|Ruta para almacenamiento de ficheros temporales|Debe existir|
@@ -440,13 +442,20 @@ Fin del proceso
 ```
 
 ### Instalar Grid
+(Documentación pendiente)
 
 ### Crear Cluster
+(Documentación pendiente)
 
 ### Instalar Software de base de datos Oracle
+(Documentación pendiente)
 
 ### Crear base de datos RAC
+(Documentación pendiente)
 
 ### Crear Base de datos Data Guard Standby
+(Documentación pendiente)
 
 ### Configurar Data Guard Broker
+(Documentación pendiente)
+
