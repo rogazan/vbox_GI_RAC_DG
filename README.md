@@ -266,6 +266,10 @@ Se ejecuta con la siguiente sintaxis desde el directorio que contiene el softwar
 
 El proceso tardará aproximadamente 45 MINUTOS en la instalación de referencia.
 
+Tras el proceso podemos verificar en el administrador de medios virtuales de virtualBox que el disco imagen se ha generado correctamente
+
+![ScreenShot](images/crearImagen1.jpg)
+
 
 ### Crear Cluster
 
@@ -310,6 +314,136 @@ Se ejecuta con la siguiente sintaxis desde el directorio que contiene el softwar
 ```
 
 El proceso tardará aproximadamente 15 MINUTOS en la instalación de referencia (Con dos máquinas virtuales y 8 discos compartidos de 10Gb. Por unidad)
+
+Tras el proceso podemos hacer una serie de verificaciones. Se inicarán los DOS servidores vituales y sesión root en ambos. Desde ahí se puede verificar:
+
+Almacenamiento compartido, que tendrá un aspecto similar a
+
+```
+ls -l /dev/oracleasm/disks
+lrwxrwxrwx. 1 root root 10 Oct 25 22:01 DISK1 -> ../../sdb1
+lrwxrwxrwx. 1 root root 10 Oct 25 22:02 DISK2 -> ../../sdc1
+lrwxrwxrwx. 1 root root 10 Oct 25 22:02 DISK3 -> ../../sdd1
+lrwxrwxrwx. 1 root root 10 Oct 25 22:02 DISK4 -> ../../sde1
+lrwxrwxrwx. 1 root root 10 Oct 25 22:01 DISK5 -> ../../sdf1
+lrwxrwxrwx. 1 root root 10 Oct 25 22:01 DISK6 -> ../../sdg1
+lrwxrwxrwx. 1 root root 10 Oct 25 21:49 DISK7 -> ../../sdh1
+lrwxrwxrwx. 1 root root 10 Oct 25 21:56 DISK8 -> ../../sdi1
+```
+
+```
+ls -l /dev/sd[b-z]1
+brw-rw----. 1 grid asmadmin 8,  17 Oct 25 22:41 /dev/sdb1
+brw-rw----. 1 grid asmadmin 8,  33 Oct 25 22:41 /dev/sdc1
+brw-rw----. 1 grid asmadmin 8,  49 Oct 25 22:41 /dev/sdd1
+brw-rw----. 1 grid asmadmin 8,  65 Oct 25 22:41 /dev/sde1
+brw-rw----. 1 grid asmadmin 8,  81 Oct 25 22:41 /dev/sdf1
+brw-rw----. 1 grid asmadmin 8,  97 Oct 25 22:39 /dev/sdg1
+brw-rw----. 1 grid asmadmin 8, 113 Oct 25 22:39 /dev/sdh1
+brw-rw----. 1 grid asmadmin 8, 129 Oct 25 22:41 /dev/sdi1
+```
+
+Memoria y swap
+
+```
+free
+              total        used        free      shared  buff/cache   available
+Mem:        8009160     3627644      207700     3411124     4173816      756100
+Swap:       8010180      210944     7799236
+```
+
+Configuración de red
+
+```
+ifconfig enp0s3 | grep "inet "
+inet 192.168.1.81  netmask 255.255.255.0  broadcast 192.168.1.255
+```
+
+```
+ifconfig enp0s8 | grep "inet "
+inet 192.168.185.81  netmask 255.255.255.0  broadcast 192.168.185.255
+```
+
+
+Resolución de nombres y conexiones
+```
+nslookup nodo1
+Server:         192.168.1.81
+Address:        192.168.1.81#53
+
+Name:   nodo1.example.com
+Address: 192.168.1.81
+```
+
+```
+nslookup nodo1-vip
+Server:         192.168.1.81
+Address:        192.168.1.81#53
+
+Name:   nodo1-vip.example.com
+Address: 192.168.1.83
+```
+
+```
+nslookup nodo1-priv
+Server:         192.168.1.81
+Address:        192.168.1.81#53
+
+Name:   nodo1-priv.example.com
+Address: 192.168.185.81
+```
+
+```
+nslookup cluster01-scan
+Server:         192.168.1.81
+Address:        192.168.1.81#53
+
+Name:   cluster01-scan.example.com
+Address: 192.168.1.87
+Name:   cluster01-scan.example.com
+Address: 192.168.1.86
+Name:   cluster01-scan.example.com
+Address: 192.168.1.85
+```
+
+```
+nslookup www.google.com
+Server:         192.168.1.81
+Address:        192.168.1.81#53
+
+Non-authoritative answer:
+Name:   www.google.com
+Address: 142.250.200.132
+Name:   www.google.com
+Address: 2a00:1450:4003:80f::2004
+```
+
+```
+ping -c 2 nodo1
+PING nodo1.example.com (192.168.1.81) 56(84) bytes of data.
+64 bytes from nodo1.example.com (192.168.1.81): icmp_seq=1 ttl=64 time=0.011 ms
+64 bytes from nodo1.example.com (192.168.1.81): icmp_seq=2 ttl=64 time=0.021 ms
+```
+
+``` 
+ping -c 2 nodo1-vip
+64 bytes from nodo1-vip.example.com (192.168.1.83): icmp_seq=1 ttl=64 time=0.012 ms
+64 bytes from nodo1-vip.example.com (192.168.1.83): icmp_seq=2 ttl=64 time=0.025 ms
+```
+
+```
+ping -c 2 nodo1-priv
+PING nodo1-priv.example.com (192.168.185.81) 56(84) bytes of data.
+64 bytes from nodo1-priv.example.com (192.168.185.81): icmp_seq=1 ttl=64 time=0.012 ms
+64 bytes from nodo1-priv.example.com (192.168.185.81): icmp_seq=2 ttl=64 time=0.015 ms
+```
+
+```
+ping -c www.google.com
+PING www.google.com (172.217.168.164) 56(84) bytes of data.
+64 bytes from mad07s10-in-f4.1e100.net (172.217.168.164): icmp_seq=1 ttl=117 time=6.88 ms
+64 bytes from mad07s10-in-f4.1e100.net (172.217.168.164): icmp_seq=2 ttl=117 time=6.54 ms
+```
 
 
 ### Instalar Grid
