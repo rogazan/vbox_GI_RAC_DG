@@ -430,7 +430,7 @@ Se ejecuta con la siguiente sintaxis desde el directorio que contiene el softwar
 .\\5_CrearDBRAC.ps1 \[fichero_parámetros_json\]
 ```
 
-El proceso tardará aproximadamente XX MINUTOS en la instalación de referencia
+El proceso tardará aproximadamente 30 MINUTOS en la instalación de referencia
 
 
 ### Crear Base de datos DataGuard Standby
