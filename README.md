@@ -176,9 +176,11 @@ Antes de proceder a la ejecución de los procesos de instalación automatizada h
 
    Ambos ficheros deberán guardarse en el mismo directorio.
 
-6. Verificar la ruta de instalación de VirtualBox V.6.1.x (típicamente **C:\\Program Files\\Oracle\\VirtualBox**) y confirmar que contiene el fichero .iso de Guest Additions **VBoxGuestAdditions.iso** y la utilidad **vboxmanage.exe**
+6. Instalar Virtualbox 6.1.X. Anotar la ruta de instalación de VirtualBox V.6.1.x (típicamente **C:\\Program Files\\Oracle\\VirtualBox**) y confirmar que dicha ruta contiene el fichero .iso de Guest Additions **VBoxGuestAdditions.iso** y la utilidad **vboxmanage.exe**
 
-7. Crear el fichero de definición de infraestructura. Se debe construir con los parámetros necesarios con una estructura JSON. Por defecto se llamará “params.json” y se almacenará en el mismo directorio que los programas ejecutables. Se proporciona un ejemplo junto con el software que puede ser editado con los valores que correspondan en cada instalación. Los parámetros de dicho fichero se detallan a continuación.
+   > NOTA: Se han detectado ciertos problemas de compatibilidad entre la plataforma de virtualización Windows y la versión de VirtualBox 6.1.28. Si se utiliza dicha plataforma de virtualización, se recomienda la versión 6.1.26 (<https://download.virtualbox.org/virtualbox/6.1.26/VirtualBox-6.1.26-145957-Win.exe>)
+
+7. Crear el fichero de definición de infraestructura. Se debe construir con los parámetros necesarios con una estructura JSON. Por defecto se llamará “params.json” y se almacenará en el mismo directorio que los programas ejecutables. Se proporciona un ejemplo junto con el software que puede ser editado con los valores que correspondan en cada instalación. Los parámetros de dicho fichero se detallan a continuación
 
 |**Parámetro**|**Descripción**|**Valores***|
 |-------------------------|------------------------------------------------------------------------------|----------------------------------------------------------------------|
@@ -303,7 +305,7 @@ Finalizado
 Fin del proceso
 ```
 
-### Crear imagen:
+### Crear Cluster
 
 Este proceso realiza las siguientes acciones:
 
@@ -435,3 +437,16 @@ Esperando cierre de Sistema en nodo1
 Finalizado
 
 Fin del proceso
+```
+
+### Instalar Grid
+
+### Crear Cluster
+
+### Instalar Software de base de datos Oracle
+
+### Crear base de datos RAC
+
+### Crear Base de datos Data Guard Standby
+
+### Configurar Data Guard Broker
