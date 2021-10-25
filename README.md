@@ -81,6 +81,7 @@ Dominio: Todas las máquinas virtuales formarán parte de un dominio internet pa
 
 Hostname: Se establecerá una nomenclatura para las máquinas virtuales con el siguiente formato **\<PREFNODO>\<Num_secuencial>.\<DOMINIO** (ver parámetros de configuración de infraestructura)
 
+
 ## Software de desarrollo
 
 Toda la solución está construida utilizando PowerShell 5.1 nativo de Windows 10 y no se requiere ningún complemento añadido. Estructuralmente está desarrollado con un modelo de objetos reutilizables que contienen las clases, métodos y atributos necesarios para implantar la infraestructura y proporcionar todos los elementos necesarios para procesarla. También tiene un módulo de funciones para ciertas tareas y un fichero de encabezado que aglutina las tareas con las que comienza cada proceso. Estas tres piezas se ubican en una carpeta denominada “comunes”.
@@ -99,15 +100,15 @@ El modelo del proceso se repite de manera similar en todos los procesos ejecutab
 
 6. Copia de los scripts construidos a un directorio temporal de trabajo en Windows con denominación **milog\<nnn>.sh**
 
-7. Trasferencia de los scripts a los servidores Linux
+7. Trasferencia de los scripts al servidores Linux que corresponda
 
 8. Configuración del formato y los permisos de los scripts transferidos
 
 9. Ejecución de los scripts transferidos en los servidores Linux
 
-10. Captura de la salida stdout y stderr que produce la ejecución y almacenamiento en Windows junto con los scripts ejecutados, con denominación **milog\<nnn>.log.** La salida de los scripts puede mostrarse en una ventana mientras se ejecutan o solamente almacenarse en disco.
+10. Captura de la salida stdout y stderr que produce la ejecución en linux y almacenamiento del resultado en Windows junto con los scripts ejecutados, con denominación **milog\<nnn>.log.** La salida de los scripts puede mostrarse en una ventana mientras se ejecutan o solamente almacenarse en disco.
 
-La relación entre el proceso PoweShell y las máquinas virtuales se establece mediante invocaciones a las funcionalidades del componente VBoxManage
+La relación entre el proceso PoweShell y las máquinas virtuales se establece mediante invocaciones a las funcionalidades del componente de virtualBox VBoxManage
 
 Cada uno de los procesos ejecutará uno o varios scripts bash en las máquinas virtuales de manera secuencial hasta la finalización de todas sus tareas.
 
@@ -117,7 +118,7 @@ Los procesos ejecutables que se proporcionan son los siguientes:
 |---|---|
 | 0_validarParam.ps1| Valida los parámetros del fichero de configuración|
 | 1_crearImagen.ps1| Automatiza la instalación base Linux como modelo para las máquinas virtuales|
-| 1b_ActualizarImagen.ps1| Actualiza el software sistema desde los repositorios de internet del disco imagen para evitar la necesidad de crear un disco imagen desde cero|
+| 1b_ActualizarImagen.ps1| (optativo) Actualiza el software Linux del disco imagen desde los repositorios de internet para evitarcrear un disco imagen desde cero|
 | 2_crearCluster.ps1| Construye la infraestructura física virtualizada: máquinas virtuales, discos compartidos y redes, e  instala piezas de software de base|
 | 3_instalarGrid.ps1| Instala el software GI Oracle y construye un cluster sobre la infraestructura física virtualizada con dos diskGroups: DATA y FRA|
 | 4_InstalarSoftDB.ps1| Despliega el software de base de datos en el cluster y prepara instalación de Bases de Datos RAC o Single Instance|
@@ -132,6 +133,7 @@ Además se proporcionan unas utilidades de servicio:
 |------------------------|-----------------------------|
 | utl_iniciarCluster.ps1 | Inicio ordenado del cluster |
 | utl_pararCluster.ps1   | Parada ordenada del cluster |
+
 
 ## Tareas previas a la instalación
 
@@ -240,9 +242,11 @@ Antes de proceder a la ejecución de los procesos de instalación automatizada h
 .\\0_validarParam.ps1 \[fichero_parámetros_json\]
 ```
 
+
 ## Ejecución de los procesos de instalación del sistema
 
 > NOTA: Todos los procesos deben ejecutarse en secuencia y CON LOS MISMOS PARAMETROS EN EL FICHERO DE CONFIGURACION
+
 
 ### Crear imagen
 
@@ -261,6 +265,7 @@ Se ejecuta con la siguiente sintaxis desde el directorio que contiene el softwar
 ```
 
 El proceso tardará aproximadamente 45 MINUTOS en la instalación de referencia.
+
 
 ### Crear Cluster
 
@@ -323,7 +328,7 @@ Este proceso realiza las siguientes acciones:
 
 - Instala CVUQDISK en todos los nodos
 
-- Crea un fichero de respuestas adpatado a la configuración
+- Crea un fichero de respuestas adaptado a la configuración
 
 - Instala grid con el fichero de respuestas
 
@@ -334,13 +339,13 @@ Este proceso realiza las siguientes acciones:
 - Añade un groupDisk FRA
 
 
-Se Crean y ejecutan los siguientes scripts Bash:
+Se crean y ejecutan los siguientes scripts Bash:
 
 - Configuración passwordless root
 
-- Configuración passwordless root
+- Configuración passwordless grid
 
-- Desempaquetado de zip Oracle
+- Desempaquetado de zip grid
 
 - Instalación CVUQDISK en todos los nodos (un único script que actúa contra todos los nodos mediante scp y ssh)
 
@@ -358,16 +363,159 @@ Se ejecuta con la siguiente sintaxis desde el directorio que contiene el softwar
 .\\3_instalarGrid.ps1 \[fichero_parámetros_json\]
 ```
 
-El proceso tardará aproximadamente XX MINUTOS en la instalación de referencia (Con dos máquinas virtuales)
+El proceso tardará aproximadamente 55 MINUTOS en la instalación de referencia
+
 
 ### Instalar Software de base de datos Oracle
-(Documentación en curso)
+
+Este proceso realiza las siguientes acciones:
+
+- Crea claves RSA para usuario de grid y configura la conexión de usuario de oracle en modo passwordless entre todos los nodos (sólo en el caso de que los usuarios de grid y de oracle DB sean diferentes)
+
+- Copia el zip de Oracle DB al directorio /tmp del primer nodo
+
+- Desempaqueta el zip de Oracle DB en el ORACLE_HOME de oracle (/u01/app/oracle/product/19.3.0/dbhome_1) del primer nodo
+
+- Elimina el zip de /tmp
+
+- Crea un fichero de respuestas adaptado a la configuración 
+
+- Instala el sofware de base de datos oracle con el fichero de respuestas
+
+- Ejecuta root.sh en todos los nodos
+
+
+Se crean y ejecutan los siguientes scripts Bash:
+
+- Configuración passwordless oracle (sólo en el caso de que los usuarios de grid y de oracle DB sean diferentes)
+
+- Desempaquetado de zip Oracle
+
+- Generación de fichero de respuestas
+
+- Instalación de db oracle mediante runInstaller en modo silent
+
+- Ejecución de root.sh en todos los nodos (uno por cada nodo, ejecutados de manera secuencial)
+
+- Generación del diskGroup FRA mediante asmca en modo silent
+
+Se ejecuta con la siguiente sintaxis desde el directorio que contiene el software
+
+```
+.\\4_InstalarSoftDB.ps1 \[fichero_parámetros_json\]
+```
+
+El proceso tardará aproximadamente 30 MINUTOS en la instalación de referencia
+
 
 ### Crear base de datos RAC
-(Documentación en curso)
 
-### Crear Base de datos Data Guard Standby
-(Documentación en curso)
+Este proceso realiza las siguientes acciones:
 
-### Configurar Data Guard Broker
-(Documentación en curso)
+- Crea un fichero de respuestas adaptado a la configuración 
+
+- Instala una base de datos RAC con el fichero de respuestas
+
+- Configura /etc/oratab en todos los nodos
+
+
+Se crean y ejecutan los siguientes scripts Bash:
+
+- Generación de fichero de respuestas, instalación de db oracle mediante dbca en modo silent y configuración de /etc/oratab (todo en un único script)
+
+
+Se ejecuta con la siguiente sintaxis desde el directorio que contiene el software
+
+```
+.\\5_CrearDBRAC.ps1 \[fichero_parámetros_json\]
+```
+
+El proceso tardará aproximadamente XX MINUTOS en la instalación de referencia
+
+
+### Crear Base de datos DataGuard Standby
+
+Este proceso realiza las siguientes acciones:
+
+- Crea una entrada temporal en el servicio listener del nodo 1
+
+- Configura la base de datos primaria en modo archivelog
+
+- Crea standby log files en la base de datos primaria
+
+- Configura los parámetros de replicación de logs en la base de datos primaria (log_archive_config, log_archive_dest_1, log_archive_dest_2, standby_file_management, fal_server, db_file_name_convert y log_file_name_convert)
+
+- Crea directorios necesarios para la base de datos standby en todos los nodos
+
+- Crea e inicia la instancia auxiliar en modo nomount en nodo 1
+
+- Duplica la base de datos mediante RMAN mediante "duplicate target database for standby from active database"
+
+- Crea pfile y spfile de la base de datos standby
+
+- Crea recursos de cluster (base de datos e instancias) para la base de datos standby
+
+- Replica fichero de password de base de datos primaria en la base de datos standby
+
+- Crea entradas TNS en todos los nodos para la base de datos standby
+
+- Elimina entrada temporal de listener en nodo 1
+
+- Configura flashback en ambas bases de datos
+
+
+Se crean y ejecutan los siguientes scripts Bash:
+
+- Generación de entrada listener y reinicio del servicio en nodo 1
+
+- Proceso completo de replicación RMAN y clusterización de la base de datos standby
+
+- Copia del fichero de password de primaria a standby
+
+- Generación de entradas TNS en todos los nodos (un único script para todos los nodos)
+
+- Eliminación de listener temporal y reinicio del servicio en nodo 1
+
+- Configuración de flashback en ambas bases de datos
+
+
+Se ejecuta con la siguiente sintaxis desde el directorio que contiene el software
+
+```
+.\\6_CrearStandbyRAC.ps1 \[fichero_parámetros_json\]
+```
+
+El proceso tardará aproximadamente XX MINUTOS en la instalación de referencia
+
+
+### Configurar DataGuard Broker
+
+Este proceso realiza las siguientes acciones:
+
+- Configura los parámetros necesarios en la base de datos primaria (log_archive_dest_2, dg_broker_start, dg_broker_config_file1, dg_broker_config_file2)
+
+- Configura los parámetros necesarios en la base de datos standby (log_archive_dest_2, dg_broker_start, dg_broker_config_file1, dg_broker_config_file2)
+
+- Crea una nueva configuración Broker a partir de la base de datos primaria
+
+- Establece propiedad RedoRoutes de primaria a standby en modo ASYNC
+
+- Establece propiedad RedoRoutes de standby a primaria en modo ASYNC
+
+- Establece propiedades de Timeout (CommunicationTimeout y OperationTimeout)
+
+- Habilita la nueva configuración 
+
+
+Se crean y ejecutan los siguientes scripts Bash:
+
+- Todo el proceso se realiza con un único script
+
+
+Se ejecuta con la siguiente sintaxis desde el directorio que contiene el software
+
+```
+.\\7_CrearBroker.ps1 \[fichero_parámetros_json\]
+```
+
+El proceso tardará aproximadamente XX MINUTOS en la instalación de referencia
