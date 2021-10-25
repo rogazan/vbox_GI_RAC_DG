@@ -485,7 +485,7 @@ Se ejecuta con la siguiente sintaxis desde el directorio que contiene el softwar
 .\\6_CrearStandbyRAC.ps1 \[fichero_parámetros_json\]
 ```
 
-El proceso tardará aproximadamente XX MINUTOS en la instalación de referencia
+El proceso tardará aproximadamente 20 MINUTOS en la instalación de referencia
 
 
 ### Configurar DataGuard Broker
@@ -518,4 +518,4 @@ Se ejecuta con la siguiente sintaxis desde el directorio que contiene el softwar
 .\\7_CrearBroker.ps1 \[fichero_parámetros_json\]
 ```
 
-El proceso tardará aproximadamente XX MINUTOS en la instalación de referencia
+El proceso tardará aproximadamente 4 MINUTOS en la instalación de referencia
