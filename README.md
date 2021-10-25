@@ -442,20 +442,19 @@ Fin del proceso
 ```
 
 ### Instalar Grid
-(Documentación pendiente)
+(Documentación en curso)
 
 ### Crear Cluster
-(Documentación pendiente)
+(Documentación en curso)
 
 ### Instalar Software de base de datos Oracle
-(Documentación pendiente)
+(Documentación en curso)
 
 ### Crear base de datos RAC
-(Documentación pendiente)
+(Documentación en curso)
 
 ### Crear Base de datos Data Guard Standby
-(Documentación pendiente)
+(Documentación en curso)
 
 ### Configurar Data Guard Broker
-(Documentación pendiente)
-
+(Documentación en curso)
