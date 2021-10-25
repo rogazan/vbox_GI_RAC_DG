@@ -11,13 +11,22 @@ Automatización completa de infraestructuras virtualizadas de Linux, Oracle Grid
 
 ## Host de alojamiento de elementos virtuales
 
-Todo el proceso para alojar los sistemas virtualizados se realizará desde un ordenador PC Windows 10. En la prueba se ha utilizado una versión Windows 10 PRO 21H1 con procesador Intel i7 de 8ª GEN, 24 Gb RAM y 3 SSD de 500Gb cada uno, distribuidos del siguiente modo:
+Todo el proceso para alojar los sistemas virtualizados se realizará desde un ordenador PC Windows 10. La capacidad en términos de procesador, memoria y espacio disponible en disco debe ser suficiente para soportar la implantación.
+- Memoria: Debemos contar con memoria suficiente para la ejeción simultánea de todas las máquinas virtuales que formarán el cluster Oracle. Dado que la recomendación de Oracle para 19c es de un mínimo de 8Gb. por máquina y que debemos preservar no menos de 3 o 4 Gb para el sistema anfitrión, debemos contar con al menos 20 Gb. para la solución mínima de un sistema de dos nodos. 32 Gb. puede ser una cantidad de memoria razonable para manejar cómodamente un sistema de 3 nodos.
+- Espacio en disco: Se utilizarán discos de expansión dinámica para los discos de sistema de las máquinas virtuales y discos de tamaño fijo para los discos compartidos. Podemos estimar una tasa de ocupación de no menos del 50% del tamaño de disco de sistema de cada nodo, que hará que multiplicar por el número de nodos, y a eso hay que añadir el tamaño de cada disco compartido multiplicado por el número de discos compartidos de la instalación. Por tanto en un sistema de 3 nodos con disco de sistema de 64Gb. y 8 discos compartidos de 10Gb., necesitaremos un espacio total libre de ((64 * 3) / 2) + (10 * 8) = 176Gb. libres.
+- 
+   Por otro lado, si bien podemos trabajar con un único disco para contener la totalidad de la solución, parece recomendable virtualizar los discos en dos discos físicos diferenciados, uno para los discos de sistema de las máquinas virtuales y otro para los discos compartidos.
+   
+   Además, es altamente recomandable utilizar discos de tipo SSD por su elevada velocidad de respuesta
+- Procesador: Necesitaremos disponer de un procesador que nos permita asignar un mínimo de un hilo dedicado para cada máquina virtual.
 
-- Disco C: Sistema operativo del host Windows y software de virtualización
+Como referencia, en las pruebas se ha utilizado un equipo Windows 10 PRO 21H1 con procesador Intel i7 de 8ª GEN (4nuclos, 8 hilos), 24 Gb RAM y 3 SSD de 500Gb cada uno, distribuidos del siguiente modo:
 
-- Disco E. Discos de Sistema para alojar las maquinas virtuales
+- Disco C: Sistema operativo del host Windows y software de virtualización (interno nvme)
 
-- Disco G: Discos compartidos virtualizados del sistema de almacenamiento ASM
+- Disco E. Discos de Sistema para alojar las maquinas virtuales (Interno SATA3)
+
+- Disco G: Discos compartidos virtualizados del sistema de almacenamiento ASM (SATA3 conectado a interfaz USB 3.1) 
 
 Para la virtualización de componentes utilizará Oracle VirtualBox, mas concretamente la versión 6.1.26
 
@@ -233,9 +242,7 @@ Antes de proceder a la ejecución de los procesos de instalación automatizada h
 
 ## Ejecución de los procesos de instalación del sistema
 
-Llegados a este punto estaremos en condiciones de proceder con la instalación.
-
-NOTA: Todos los procesos deben ejecutarse con LOS MISMOS PARAMETROS EN EL FICHERO DE CONFIGURACION
+> NOTA: Todos los procesos deben ejecutarse en secuencia y CON LOS MISMOS PARAMETROS EN EL FICHERO DE CONFIGURACION
 
 ### Crear imagen
 
@@ -245,7 +252,7 @@ Este proceso crea una máquina virtual VirtualBox sobre la que hace una instalac
 
 -  Configuración del Kernel de arranque
 
-Y termina preservando una copia imagen del disco de sistema funcional y actualizada y finalmente elimina el servidor temporal
+Y termina preservando una copia imagen del disco de sistema funcional y actualizada y eliminando el servidor temporal
 
 Se ejecuta con la siguiente sintaxis desde el directorio que contiene el software
 
@@ -253,59 +260,7 @@ Se ejecuta con la siguiente sintaxis desde el directorio que contiene el softwar
 .\\1_crearImagen.ps1 \[fichero_parámetros_json\]
 ```
 
-El proceso tardará aproximadamente 45 MINUTOS en la instalación de referencia La salida del proceso será similar a:
-
-```
-Cargando infraestructura
-Finalizado
-
-Comprobando que NO existe el servidor temporal
-Finalizado
-
-Comprobando que NO existe el disco imagen
-Finalizado
-
-Creando Disco temporal
-Finalizado
-
-Creando Servidor virtual temporal
-Finalizado
-
-Iniciando instalación desatendida en temporal
-Finalizado
-
-Procesando la instalación desatendida
-Se trata de un proceso largo que se desarrolla de manera desatendida en el servidor virtual
-El proceso de instalación seguirá trabajando en segundo plano aunque no muestre ningún signo de actividad.
-Ignore la petición de login y no interfiera hasta que se indique que el proceso se ha completado.
-Finalizado
-
-Ejecutando configuración LINUX en servidor temporal
-Finalizado
-
-Deteniendo temporal
-Esperando cierre de Sistema en temporal
-Finalizado
-
-Arrancando temporal
-Esperando inicio de Sistema en temporal
-Finalizado
-
-Estableciendo kernel de arranque
-Finalizado
-
-Deteniendo temporal
-Esperando cierre de Sistema en temporal
-Finalizado
-
-Creando disco imagen
-Finalizado
-
-Eliminando servidor temporal
-Finalizado
-
-Fin del proceso
-```
+El proceso tardará aproximadamente 45 MINUTOS en la instalación de referencia.
 
 ### Crear Cluster
 
@@ -314,6 +269,8 @@ Este proceso realiza las siguientes acciones:
 - Crea todas las máquinas virtuales
 
 - Configura la red pública en la primera máquina virtual
+
+- Configura usuarios linux (grupos de pertenencia, permisos, profiles, limits y umask)
 
 - Crea y configura la red privada en la primera máquina virtual
 
@@ -329,123 +286,79 @@ Este proceso realiza las siguientes acciones:
 
 - Crea el servicio DNS
 
+
 Se Crean y ejecutan los siguientes scripts Bash:
 
 - Configuraciones iniciales del primer nodo
 
-- Particionado fdisk y configuración de los discos compartidos en el primer nodo
+- Particionado fdisk y configuración de los discos compartidos en el primer nodo (udev o asmlib)
 
 - Configuración de redes y discos compartidos en el resto de los nodos (uno por cada nodo)
 
 - Crea el servidor DNS
 
+
 Se ejecuta con la siguiente sintaxis desde el directorio que contiene el software
 
 ```
-.\\** **2_crearCluster.ps1 \[fichero_parámetros_json\]
+.\\2_crearCluster.ps1 \[fichero_parámetros_json\]
 ```
 
 El proceso tardará aproximadamente 15 MINUTOS en la instalación de referencia (Con dos máquinas virtuales y 8 discos compartidos de 10Gb. Por unidad)
 
-La salida del proceso será similar a:
-
-```
-Cargando infraestructura
-Finalizado
-
-Comprobando que NO existen los servidores virtuales del cluster
-Finalizado
-
-Comprobando que No existen los discos compartidos del cluster
-Finalizado
-
-Comprobando que existe disco imagen
-Finalizado
-
-Creando Red Privada
-Finalizado
-
-Creando Disco de sistema nodo1
-Finalizado
-
-Creando Servidor virtual nodo1
-Finalizado
-
-Arrancando nodo1
-Esperando inicio de Sistema en nodo1
-Finalizado
-
-Ejecutando configuración LINUX en nodo1
-Finalizado
-
-Deteniendo nodo1
-Esperando cierre de Sistema en nodo1
-Finalizado
-
-Creando discos compartidos
-Disco 1
-Disco 2
-Disco 3
-Disco 4
-Disco 5
-Disco 6
-Disco 7
-Disco 8
-Finalizado
-
-Mapeando discos compartidos en nodo1
-Finalizado
-
-Arrancando nodo1
-Esperando inicio de Sistema en nodo1
-Finalizado
-
-Configurando discos compartidos en nodo1
-Finalizado
-
-Deteniendo nodo1
-Esperando cierre de Sistema en nodo1
-Finalizado
-
-Clonando Disco nodo2
-Finalizado
-
-Creando Servidor virtual nodo2
-Finalizado
-
-Mapeando discos compartidos en nodo2
-Finalizado
-
-Arrancando nodo2
-Esperando inicio de Sistema en nodo2
-Finalizado
-
-Configurando sistema en nodo2
-Finalizado
-
-Deteniendo nodo2
-Esperando cierre de Sistema en nodo2
-Finalizado
-
-Arrancando nodo1
-Esperando inicio de Sistema en nodo1
-Finalizado
-
-Configurando DNS en nodo1
-Finalizado
-
-Deteniendo nodo1
-Esperando cierre de Sistema en nodo1
-Finalizado
-
-Fin del proceso
-```
 
 ### Instalar Grid
-(Documentación en curso)
 
-### Crear Cluster
-(Documentación en curso)
+Este proceso realiza las siguientes acciones:
+
+- Crea claves RSA para root y configura la conexión de usuario root en modo passwordless desde el primer nodo hacia todos los demás
+
+- Crea claves RSA para usuario de grid y configura la conexión de usuario de grid en modo passwordless entre todos los nodos
+
+- Copia el zip de Oracle grid al directorio /tmp del primer nodo
+
+- Desempaqueta el zip de Oracle grid en el ORACLE_HOME de grid (/u01/app/19.3.0/grid) del primer nodo
+
+- Elimina el zip de /tmp
+
+- Instala CVUQDISK en todos los nodos
+
+- Crea un fichero de respuestas adpatado a la configuración
+
+- Instala grid con el fichero de respuestas
+
+- Ejecuta orainstRoot.sh en todos los nodos
+
+- Ejecuta root.sh en todos los nodos
+
+- Añade un groupDisk FRA
+
+
+Se Crean y ejecutan los siguientes scripts Bash:
+
+- Configuración passwordless root
+
+- Configuración passwordless root
+
+- Desempaquetado de zip Oracle
+
+- Instalación CVUQDISK en todos los nodos (un único script que actúa contra todos los nodos mediante scp y ssh)
+
+- Generación de fichero de respuestas e instalación de grid mediante gridSetup en modo silent
+
+- Ejecucion de orainstRoot.sh en todos los nodos (un único script que actúa contra todos los nodos mediante scp y ssh)
+
+- Ejecución de root.sh en todos los nodos (uno por cada nodo, ejecutados de manera secuencial)
+
+- Generación del diskGroup FRA mediante asmca en modo silent
+
+Se ejecuta con la siguiente sintaxis desde el directorio que contiene el software
+
+```
+.\\3_instalarGrid.ps1 \[fichero_parámetros_json\]
+```
+
+El proceso tardará aproximadamente XX MINUTOS en la instalación de referencia (Con dos máquinas virtuales)
 
 ### Instalar Software de base de datos Oracle
 (Documentación en curso)
