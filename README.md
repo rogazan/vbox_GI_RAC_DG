@@ -266,9 +266,17 @@ Se ejecuta con la siguiente sintaxis desde el directorio que contiene el softwar
 
 El proceso tardará aproximadamente 45 MINUTOS en la instalación de referencia.
 
-Tras el proceso podemos verificar en el administrador de medios virtuales de virtualBox que el disco imagen se ha generado correctamente
+Tras el proceso podemos verificar en el administrador de medios virtuales de virtualBox que el disco imagen se ha generado
 
-![ScreenShot](images/crearImagen1.jpg)
+```
+dir E:\VirtualBox\imagen
+
+    Directorio: E:\VirtualBox\imagen
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+-a----        24/10/2021     20:36     5470420992 imagen.vdi
+```
 
 
 ### Crear Cluster
@@ -499,6 +507,101 @@ Se ejecuta con la siguiente sintaxis desde el directorio que contiene el softwar
 
 El proceso tardará aproximadamente 55 MINUTOS en la instalación de referencia
 
+Tras el proceso podemos hacer una serie de verificaciones. Por ejemplo desde una sesion con el usario de grid abierta en el primer nodo, se puede verificar el estado del cluster:
+
+```
+. oraenv
+ORACLE_SID = [grid] ? +ASM1
+The Oracle base has been set to /u01/app/grid
+
+crsctl check cluster -all
+**************************************************************
+nodo1:
+CRS-4537: Cluster Ready Services is online
+CRS-4529: Cluster Synchronization Services is online
+CRS-4533: Event Manager is online
+**************************************************************
+nodo2:
+CRS-4537: Cluster Ready Services is online
+CRS-4529: Cluster Synchronization Services is online
+CRS-4533: Event Manager is online
+**************************************************************
+```
+
+O podemos ver la totalidad de recursos del cluster:
+
+```
+. oraenv
+ORACLE_SID = [grid] ? +ASM1
+The Oracle base has been set to /u01/app/grid
+
+crsctl stat res -t
+--------------------------------------------------------------------------------
+Name           Target  State        Server                   State details
+--------------------------------------------------------------------------------
+Local Resources
+--------------------------------------------------------------------------------
+ora.LISTENER.lsnr
+               ONLINE  ONLINE       nodo1                    STABLE
+               ONLINE  ONLINE       nodo2                    STABLE
+ora.chad
+               ONLINE  ONLINE       nodo1                    STABLE
+               ONLINE  ONLINE       nodo2                    STABLE
+ora.net1.network
+               ONLINE  ONLINE       nodo1                    STABLE
+               ONLINE  ONLINE       nodo2                    STABLE
+ora.ons
+               ONLINE  ONLINE       nodo1                    STABLE
+               ONLINE  ONLINE       nodo2                    STABLE
+ora.proxy_advm
+               OFFLINE OFFLINE      nodo1                    STABLE
+               OFFLINE OFFLINE      nodo2                    STABLE
+--------------------------------------------------------------------------------
+Cluster Resources
+--------------------------------------------------------------------------------
+ora.ASMNET1LSNR_ASM.lsnr(ora.asmgroup)
+      1        ONLINE  ONLINE       nodo1                    STABLE
+      2        ONLINE  ONLINE       nodo2                    STABLE
+      3        ONLINE  OFFLINE                               STABLE
+ora.DATA.dg(ora.asmgroup)
+      1        ONLINE  ONLINE       nodo1                    STABLE
+      2        ONLINE  ONLINE       nodo2                    STABLE
+      3        OFFLINE OFFLINE                               STABLE
+ora.FRA.dg(ora.asmgroup)
+      1        ONLINE  ONLINE       nodo1                    STABLE
+      2        ONLINE  ONLINE       nodo2                    STABLE
+      3        OFFLINE OFFLINE                               STABLE
+ora.LISTENER_SCAN1.lsnr
+      1        ONLINE  ONLINE       nodo2                    STABLE
+ora.LISTENER_SCAN2.lsnr
+      1        ONLINE  ONLINE       nodo1                    STABLE
+ora.LISTENER_SCAN3.lsnr
+      1        ONLINE  ONLINE       nodo1                    STABLE
+ora.asm(ora.asmgroup)
+      1        ONLINE  ONLINE       nodo1                    Started,STABLE
+      2        ONLINE  ONLINE       nodo2                    Started,STABLE
+      3        OFFLINE OFFLINE                               STABLE
+ora.asmnet1.asmnetwork(ora.asmgroup)
+      1        ONLINE  ONLINE       nodo1                    STABLE
+      2        ONLINE  ONLINE       nodo2                    STABLE
+      3        OFFLINE OFFLINE                               STABLE
+ora.cvu
+      1        ONLINE  ONLINE       nodo1                    STABLE
+ora.nodo1.vip
+      1        ONLINE  ONLINE       nodo1                    STABLE
+ora.nodo2.vip
+      1        ONLINE  ONLINE       nodo2                    STABLE
+ora.qosmserver
+      1        ONLINE  ONLINE       nodo1                    STABLE
+ora.scan1.vip
+      1        ONLINE  ONLINE       nodo2                    STABLE
+ora.scan2.vip
+      1        ONLINE  ONLINE       nodo1                    STABLE
+ora.scan3.vip
+      1        ONLINE  ONLINE       nodo1                    STABLE
+--------------------------------------------------------------------------------
+```
+
 
 ### Instalar Software de base de datos Oracle
 
@@ -541,6 +644,16 @@ Se ejecuta con la siguiente sintaxis desde el directorio que contiene el softwar
 
 El proceso tardará aproximadamente 30 MINUTOS en la instalación de referencia
 
+Tras el proceso podemos verificar que se ha desplegado el sofware oracle en el HOME de todos los nodos iniciando sesión con usuario oracle. En el siguiente ejemplo se ha iniciado sesión en el primer nodo y desde ahí se cuentan los objetos contenidos en HOME para ambos nodos (el número de objetos puede variar ligeramente, pero en todos los casos debe ser superior a los 40.000) 
+
+```
+find /u01/app/oracle/product/19.3.0/dbhome_1 | wc -l
+42081
+
+ssh nodo2 'find /u01/app/oracle/product/19.3.0/dbhome_1 | wc -l'
+41977
+```
+
 
 ### Crear base de datos RAC
 
@@ -566,6 +679,49 @@ Se ejecuta con la siguiente sintaxis desde el directorio que contiene el softwar
 
 El proceso tardará aproximadamente 30 MINUTOS en la instalación de referencia
 
+Tras el proceso podemos verificar que se ha creado la base de datos y que está operativa:
+
+```
+. oraenv
+ORACLE_SID = [oracle] ? primaria
+The Oracle base has been set to /u01/app/oracle
+
+srvctl status database -db primaria -v
+Instance primaria1 is running on node nodo1. Instance status: Open.
+Instance primaria2 is running on node nodo2. Instance status: Open
+```
+
+y por supuesto se podrá acceder a la base de datos:
+```
+sqlplus sys@primaria as sysdba
+
+SQL*Plus: Release 19.0.0.0.0 - Production on Tue Oct 26 11:33:38 2021
+Version 19.3.0.0.0
+
+Copyright (c) 1982, 2019, Oracle.  All rights reserved.
+
+Enter password:
+
+Connected to:
+Oracle Database 19c Enterprise Edition Release 19.0.0.0.0 - Production
+Version 19.3.0.0.0
+
+SQL> select name, open_mode, database_role from v$database
+  2  ;
+
+NAME      OPEN_MODE            DATABASE_ROLE
+--------- -------------------- ----------------
+PRIMARIA  READ WRITE           PRIMARY
+
+SQL> col name format a20
+SQL> col value format a20
+SQL> select name, value from v$parameter where name = 'cluster_database'
+  2  ;
+
+NAME                 VALUE
+-------------------- --------------------
+cluster_database     TRUE
+```
 
 ### Crear Base de datos DataGuard Standby
 
@@ -620,6 +776,172 @@ Se ejecuta con la siguiente sintaxis desde el directorio que contiene el softwar
 ```
 
 El proceso tardará aproximadamente 20 MINUTOS en la instalación de referencia
+
+Tras el proceso podemos verificar que se ha creado la base de datos y que está operativa en estado MOUNT:
+
+```
+. oraenv
+ORACLE_SID = [oracle] ? primaria
+The Oracle base has been set to /u01/app/oracle
+
+srvctl status database -db espera -v
+Instance espera1 is running on node nodo1. Instance status: Mounted (Closed).
+Instance espera2 is running on node nodo2. Instance status: Mounted (Closed).
+```
+
+y por supuesto se podrá acceder a la base de datos:
+
+```
+sqlplus sys@espera as sysdba
+
+SQL*Plus: Release 19.0.0.0.0 - Production on Tue Oct 26 11:59:49 2021
+Version 19.3.0.0.0
+
+Copyright (c) 1982, 2019, Oracle.  All rights reserved.
+
+Enter password:
+
+Connected to:
+Oracle Database 19c Enterprise Edition Release 19.0.0.0.0 - Production
+Version 19.3.0.0.0
+
+SQL> select name, open_mode, database_role from v$database;
+
+NAME      OPEN_MODE            DATABASE_ROLE
+--------- -------------------- ----------------
+PRIMARIA  MOUNTED              PHYSICAL STANDBY
+```
+
+Se puede verificar el estado de replicación
+```
+connect sys@primaria as sysdba
+Enter password:
+Connected.
+SQL> select thread#, max(sequence#) "ult_generado" from v$archived_log val, v$database vdb where val.resetlogs_change# = vdb.resetlogs_change# group by thread# order by 1;
+
+   THREAD# ult_generado
+---------- ------------
+         1           16
+         2           13
+
+SQL> connect sys@espera as sysdba
+Enter password:
+Connected.
+
+SQL> select thread#, max(sequence#) "ult_recibido" from v$archived_log val, v$database vdb where val.resetlogs_change# = vdb.resetlogs_change# group by thread# order by 1;
+
+   THREAD# ult_recibido
+---------- ------------
+         1           16
+         2           13
+
+SQL>  select thread#, max(sequence#) "ult_aplicado" from v$archived_log val, v$database vdb where val.resetlogs_change# = vdb.resetlogs_change# and val.applied in ('YES','IN-MEMORY') group by thread# order by 1;
+
+   THREAD# ult_aplicado
+---------- ------------
+         1           16
+         2           13
+```
+
+Tambien podemos dar un repaso a la tabla de estado de dataguard:
+```
+SQL> set lin 999
+SQL> set pages 999
+SQL> col message format a100
+SQL> col facility format a30
+SQL> connect sys@primaria as sysdba
+Enter password:
+Connected.
+SQL> SELECT inst_id, timestamp, facility, message FROM gv$dataguard_status ORDER by timestamp;
+
+   INST_ID TIMESTAMP FACILITY                       MESSAGE
+---------- --------- ------------------------------ ------------------------------------------------------------------------------------------
+         1 26-OCT-21 Log Transport Services         Redo network throttle feature is disabled at mount time
+         1 26-OCT-21 Log Transport Services         STARTING ARCH PROCESSES
+         1 26-OCT-21 Log Transport Services         STARTING ARCH PROCESSES COMPLETE
+         1 26-OCT-21 Log Transport Services         ARC0: Archival started
+         1 26-OCT-21 Log Transport Services         ARC1: Archival started
+         1 26-OCT-21 Log Transport Services         ARC2: Archival started
+         1 26-OCT-21 Log Transport Services         Becoming a 'no FAL' ARCH
+         1 26-OCT-21 Log Transport Services         Becoming the 'no SRL' ARCH
+         1 26-OCT-21 Log Transport Services         Gap Manager starting
+         1 26-OCT-21 Log Transport Services         ARC3: Archival started
+         1 26-OCT-21 Log Transport Services         Beginning to archive T-1.S-16 (SCN:0x000000000022c342-SCN:0x0000000000244ab8)
+         1 26-OCT-21 Log Transport Services         Completed archiving T-1.S-16 (SCN:0x000000000022c342-SCN:0x0000000000244ab8)
+         1 26-OCT-21 Log Transport Services         SRL selected for T-1.S-16 for LAD:2
+         1 26-OCT-21 Log Transport Services         Beginning to archive LNO:1 T-1.S-17
+         1 26-OCT-21 Log Transport Services         SRL selected for T-1.S-17 for LAD:2
+         2 26-OCT-21 Log Transport Services         Redo network throttle feature is disabled at mount time
+         2 26-OCT-21 Log Transport Services         STARTING ARCH PROCESSES
+         2 26-OCT-21 Log Transport Services         ARC0: Archival started
+         2 26-OCT-21 Log Transport Services         STARTING ARCH PROCESSES COMPLETE
+         2 26-OCT-21 Log Transport Services         Becoming a 'no FAL' ARCH
+         2 26-OCT-21 Log Transport Services         Becoming the 'no SRL' ARCH
+         2 26-OCT-21 Log Transport Services         Completed archiving T-2.S-13 (SCN:0x0000000000244fbc-SCN:0x0000000000244fc3)
+         2 26-OCT-21 Log Transport Services         Beginning to archive T-2.S-13 (SCN:0x0000000000244fbc-SCN:0x0000000000244fc3)
+         2 26-OCT-21 Log Transport Services         Gap Manager starting
+         2 26-OCT-21 Log Transport Services         STARTING ARCH PROCESSES
+         2 26-OCT-21 Log Transport Services         SRL selected for T-2.S-14 for LAD:2
+         2 26-OCT-21 Log Transport Services         Beginning to archive LNO:4 T-2.S-14
+         2 26-OCT-21 Log Transport Services         ARC3: Archival started
+         2 26-OCT-21 Log Transport Services         STARTING ARCH PROCESSES COMPLETE
+         2 26-OCT-21 Log Transport Services         ARC1: Archival started
+         2 26-OCT-21 Log Transport Services         ARC2: Archival started
+         2 26-OCT-21 Log Transport Services         SRL selected for T-2.S-13 for LAD:2
+
+32 rows selected.
+SQL> connect sys@espera as sysdba
+Enter password:
+Connected.
+SQL> SELECT inst_id, timestamp, facility, message FROM gv$dataguard_status ORDER by timestamp;
+
+   INST_ID TIMESTAMP FACILITY                       MESSAGE
+---------- --------- ------------------------------ ------------------------------------------------------------------------------------------
+         1 26-OCT-21 Log Transport Services         Redo network throttle feature is disabled at mount time
+         1 26-OCT-21 Log Transport Services         STARTING ARCH PROCESSES
+         1 26-OCT-21 Log Transport Services         ARC0: Archival started
+         1 26-OCT-21 Log Transport Services         STARTING ARCH PROCESSES COMPLETE
+         1 26-OCT-21 Log Transport Services         Becoming a 'no FAL' ARCH
+         1 26-OCT-21 Log Transport Services         Becoming the Active Gap Manager
+         1 26-OCT-21 Log Transport Services         Gap Manager starting
+         1 26-OCT-21 Log Transport Services         STARTING ARCH PROCESSES
+         1 26-OCT-21 Log Transport Services         ARC2: Archival started
+         1 26-OCT-21 Log Transport Services         ARC3: Archival started
+         1 26-OCT-21 Log Transport Services         STARTING ARCH PROCESSES COMPLETE
+         1 26-OCT-21 Log Transport Services         ARC1: Archival started
+         1 26-OCT-21 Remote File Server             Selected LNO:7 for T-1.S-16 dbid 102313836 branch 1086893359
+         1 26-OCT-21 Remote File Server             Primary database is in MAXIMUM PERFORMANCE mode
+         1 26-OCT-21 Remote File Server             Selected LNO:7 for T-1.S-17 dbid 102313836 branch 1086893359
+         1 26-OCT-21 Log Transport Services         Completed archiving T-1.S-16 (SCN:0x0000000000000000-SCN:0x0000000000000000)
+         1 26-OCT-21 Log Transport Services         Beginning to archive T-1.S-16 (SCN:0x000000000022c342-SCN:0x0000000000244ab8)
+         1 26-OCT-21 Log Apply Services             Attempt to start background Managed Standby Recovery process
+         1 26-OCT-21 Log Apply Services             Background Managed Standby Recovery process started
+         1 26-OCT-21 Log Apply Services             Managed Standby Recovery starting Real Time Apply
+         1 26-OCT-21 Log Apply Services             Media Recovery Log +FRA/ESPERA/ARCHIVELOG/2021_10_25/thread_1_seq_15.324.1086909431
+         1 26-OCT-21 Log Apply Services             Media Recovery Log +FRA/ESPERA/ARCHIVELOG/2021_10_26/thread_1_seq_16.328.1086950035
+         1 26-OCT-21 Log Apply Services             Media Recovery Waiting for T-1.S-17 (in transit)
+         1 26-OCT-21 Log Apply Services             Media Recovery Waiting for T-2.S-13
+         1 26-OCT-21 Remote File Server             Primary database is in MAXIMUM PERFORMANCE mode
+         1 26-OCT-21 Remote File Server             Selected LNO:10 for T-2.S-14 dbid 102313836 branch 1086893359
+         1 26-OCT-21 Remote File Server             Selected LNO:11 for T-2.S-13 dbid 102313836 branch 1086893359
+         1 26-OCT-21 Log Transport Services         Beginning to archive T-2.S-13 (SCN:0x0000000000244fbc-SCN:0x0000000000244fc3)
+         1 26-OCT-21 Log Apply Services             Media Recovery Log +FRA/ESPERA/ARCHIVELOG/2021_10_26/thread_2_seq_13.330.1086950197
+         1 26-OCT-21 Log Transport Services         Completed archiving T-2.S-13 (SCN:0x0000000000000000-SCN:0x0000000000000000)
+         1 26-OCT-21 Log Apply Services             Media Recovery Waiting for T-2.S-14 (in transit)
+         2 26-OCT-21 Log Transport Services         Redo network throttle feature is disabled at mount time
+         2 26-OCT-21 Log Transport Services         STARTING ARCH PROCESSES COMPLETE
+         2 26-OCT-21 Log Transport Services         STARTING ARCH PROCESSES
+         2 26-OCT-21 Log Transport Services         ARC0: Archival started
+         2 26-OCT-21 Log Transport Services         Becoming a 'no FAL' ARCH
+         2 26-OCT-21 Log Transport Services         Gap Manager starting
+         2 26-OCT-21 Log Transport Services         STARTING ARCH PROCESSES
+         2 26-OCT-21 Log Transport Services         ARC2: Archival started
+         2 26-OCT-21 Log Transport Services         STARTING ARCH PROCESSES COMPLETE
+         2 26-OCT-21 Log Transport Services         ARC1: Archival started
+         2 26-OCT-21 Log Transport Services         ARC3: Archival started
+
+42 rows selected.
+```
 
 
 ### Configurar DataGuard Broker
