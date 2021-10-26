@@ -513,11 +513,69 @@ Se ejecuta con la siguiente sintaxis desde el directorio que contiene el softwar
 El proceso tardará aproximadamente 4 MINUTOS en la instalación de referencia
 
 
-## 7. Verificaciones
+
+## 7. Elementos optativos y utilidades
+
+### 7.1. Actualizar imagen
+
+Se trata un proceso funcionalmente similar al de crear imagen, pero en vez de crearla desde cero lo hace a partir de la imagen existente y actualiza su software de sistema Linux sin necesidad de pasar por el largo proceso de actualización desatendida. igualmente se crea una máquina temporal, se ejecutan los scripts bash necesarios para la actualización, se genera una nueva imagen del disco y se suprime la máquina temporal.
+
+> NOTA: Este proceso NO actualiza las máquinas ya generadas que forman parte del cluster, tan solo lo hace con el disco imagen creado previamente.
+
+Se ejecuta con la siguiente sintaxis desde el directorio que contiene el software
+
+```
+.\\5b_CrearDBSI.ps1 \[fichero_parámetros_json\]
+```
+
+
+### 7.2. Crear base de datos Single Instance
+
+Se trata de un proceso similar al de generación de una base de datos RAC, pero en modo Sigle Instance en el servidor que se indique en la configuración. Se ha creado pensando en utilizarla como catálogo para RMAN. Aun tratándose de una Single Instance aprovecha el Cluster ASM para albergar sus contenidos.
+
+Es requisito imprescindible que se haya ejecutado el proceso al menos hasta el punto **6.4. Instalar Software de base de datos Oracle** incluído puesto, que utilizará el mismo HOME que las bases de datos primaria y standby.
+
+Se ejecuta con la siguiente sintaxis desde el directorio que contiene el software
+
+```
+.\\5b_CrearDBSI.ps1 \[fichero_parámetros_json\]
+```
+
+El proceso tardará aproximadamente 30 MINUTOS en la instalación de referencia
+
+
+### 7.3. Inicio ordenado del cluster
+
+A partir de la generación del cluster que se decribe en **6.2. Crear Cluster** es conveniente iniciar y detener los nodos del cluster con cierto orden. Esta utilidad realiza dicho inicio ordenado y va informado del proceso de inicio de sus componentes.
+
+Se ejecuta con la siguiente sintaxis desde el directorio que contiene el software
+
+```
+.\\utl_iniciarCluster.ps1 \[fichero_parámetros_json\]
+```
+
+El proceso tardará aproximadamente 10 MINUTOS en la instalación de referencia
+
+
+### 7.4. Parada ordenada del cluster
+
+Complementa al componente anterior. Realiza la parada ordenada y va informado del proceso de parada de los nodos. Aplica a partir de la generación del cluster que se decribe en **6.2. Crear Cluster**
+
+Se ejecuta con la siguiente sintaxis desde el directorio que contiene el software
+
+```
+.\\utl_pararCluster.ps1 \[fichero_parámetros_json\]
+```
+
+El proceso tardará aproximadamente 5 MINUTOS en la instalación de referencia
+
+
+
+## 8. Verificaciones
 
 Tras cada uno de los pasos se puden hacer una serie de verificaciones para confirmar que se ha alcanzado el objetivo esperado:
 
-### 7.1. Crear imagen
+### 8.1. Crear imagen
 
 Tras el proceso podemos verificar en el administrador de medios virtuales de virtualBox que el disco imagen se ha generado
 
@@ -532,7 +590,7 @@ Mode                 LastWriteTime         Length Name
 ```
 
 
-### 7.2. Crear Cluster
+### 8.2. Crear Cluster
 
 Tras el proceso podemos hacer una serie de verificaciones. Se inicarán los DOS servidores vituales y sesión root en ambos. Desde ahí se puede verificar:
 
@@ -665,7 +723,7 @@ PING www.google.com (172.217.168.164) 56(84) bytes of data.
 ```
 
 
-### 7.3. Instalar Grid
+### 8.3. Instalar Grid
 
 Tras el proceso podemos hacer una serie de verificaciones. Por ejemplo desde una sesion con el usario de grid abierta en el primer nodo, se puede verificar el estado del cluster:
 
@@ -763,7 +821,7 @@ ora.scan3.vip
 ```
 
 
-### 7.4. Instalar Software de base de datos Oracle
+### 8.4. Instalar Software de base de datos Oracle
 
 Tras el proceso podemos verificar que se ha desplegado el sofware oracle en el HOME de todos los nodos iniciando sesión con usuario oracle. En el siguiente ejemplo se ha iniciado sesión en el primer nodo y desde ahí se cuentan los objetos contenidos en HOME para ambos nodos (el número de objetos puede variar ligeramente, pero en todos los casos debe ser superior a los 40.000) 
 
@@ -776,7 +834,7 @@ ssh nodo2 'find /u01/app/oracle/product/19.3.0/dbhome_1 | wc -l'
 ```
 
 
-### 7.5. Crear base de datos RAC
+### 8.5. Crear base de datos RAC
 
 Tras el proceso podemos verificar que se ha creado la base de datos y que está operativa:
 
@@ -820,7 +878,7 @@ NAME                 VALUE
 cluster_database     TRUE
 ```
 
-### 7.6. Crear Base de datos DataGuard Standby
+### 8.6 Crear Base de datos DataGuard Standby
 
 Tras el proceso podemos verificar que se ha creado la base de datos y que está operativa en estado MOUNT:
 
@@ -945,7 +1003,7 @@ SQL> SELECT inst_id, timestamp, facility, message FROM gv$dataguard_status ORDER
 ```
 
 
-### 7.7. Configurar DataGuard Broker
+### 8.7. Configurar DataGuard Broker
 
 Tras el proceso podemos verificar la situación de DataGuard a través de broker:
 
@@ -1141,3 +1199,29 @@ Fast-Start Failover:  Disabled
 Configuration Status:
 SUCCESS   (status updated 20 seconds ago)
 ```
+
+
+
+## 9. Problemas conocidos
+
+Se relacionan ciertos problemas conocidos en la instalación y se indica el workarround aplicado:
+
+
+### 9.1. Errores con mas de un procesador asignados a las máquinas virtuales.
+
+En ciertos equipos, la asignación de mas de un procesador a las máquinas virtuales produce bloqueos de duración variable en los sistemas, cosa que NO se ha detectado asignando un único procesador. Se aconseja limitar el número de procesadores de las máquinas virtuales a 1.
+
+
+### 9.2. Evict node con Kernel UEK
+
+Con ciertas versiones recientes de Kernel Oracle Linux UEK, hemos detectado que a veces se produce un evict node e incluso un autoreboot del nodo cuando se ejecuta un **srvctl stop database**. Esta situación no se ha dado con el kernel estándar. Se ha resuelto forzando la ejecución de los sistemas Linux sin UEK
+
+
+### 9.3. Error en la ejecución de las máquinas virtuales en modo headless
+
+Inicialmente se pretendía iniciar las máquinas vituales en modo HeadLess (sin pantalla) pero se ha detectado que en algunos casos se produce un error VirtualBox que impide el arranque y que está documentado en el Ticket #20574 VirtualBox. Este error se produce en 6.1.26 y parece que se resuelve en la 6.1.28, pero esta versión 6.1.28 produce otro problema que se descibe a continuación, por lo que mantendremos el arrancando la máquinas virtuales forzado a modo GUI
+
+
+### 9.4. Problema de coexistencia de las máquinas virtuales con la pltaforma de maquinas virtuales de microsoft en VirtualBox 6.1.28
+
+Si se tiene activo el componente de la plataforma de maquinas virtuales de microsoft para WSL, las máquinas virtuales con virtualBox 6.1.28 dejen de arrancar. No consideramos adecuado obligar a prescindir de un componente importante de Windows ni a estar activando y desactivando dicho componente según lo que se pretenda utilizar, por tanto se sugiere prescindir de esa versión 6.1.28 y quedarse con la 6.1.26 hasta que se publique una nueva versión o un workarround que resuelva el problema.
