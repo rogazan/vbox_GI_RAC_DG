@@ -975,3 +975,200 @@ Se ejecuta con la siguiente sintaxis desde el directorio que contiene el softwar
 ```
 
 El proceso tardará aproximadamente 4 MINUTOS en la instalación de referencia
+
+Tras el proceso podemos verificar la situación de DataGuard a través de broker:
+
+```
+dgmgrl
+DGMGRL for Linux: Release 19.0.0.0.0 - Production on Tue Oct 26 15:10:03 2021
+Version 19.3.0.0.0
+
+Copyright (c) 1982, 2019, Oracle and/or its affiliates.  All rights reserved.
+
+Welcome to DGMGRL, type "help" for information.
+DGMGRL> connect sys@primaria
+Password:
+Connected to "primaria"
+Connected as SYSDBA.
+DGMGRL> show configuration
+
+Configuration - configuracion
+
+  Protection Mode: MaxPerformance
+  Members:
+  primaria - Primary database
+    espera   - Physical standby database
+
+Fast-Start Failover:  Disabled
+
+Configuration Status:
+SUCCESS   (status updated 70 seconds ago)
+
+DGMGRL> show database primaria
+
+Database - primaria
+
+  Role:               PRIMARY
+  Intended State:     TRANSPORT-ON
+  Instance(s):
+    primaria1
+    primaria2
+
+Database Status:
+SUCCESS
+
+DGMGRL> show database espera
+
+Database - espera
+
+  Role:               PHYSICAL STANDBY
+  Intended State:     APPLY-ON
+  Transport Lag:      0 seconds (computed 1 second ago)
+  Apply Lag:          0 seconds (computed 0 seconds ago)
+  Average Apply Rate: 4.00 KByte/s
+  Real Time Query:    OFF
+  Instance(s):
+    espera1 (apply instance)
+    espera2
+
+Database Status:
+SUCCESS
+```
+
+Validamos la base de datos primaria:
+
+```
+DGMGRL> validate database primaria
+
+  Database Role:    Primary database
+
+  Ready for Switchover:  Yes
+
+  Managed by Clusterware:
+    primaria:  YES
+```
+
+Y de manera detallada la base de datos standby
+
+```
+DGMGRL> validate database verbose espera
+
+  Database Role:     Physical standby database
+  Primary Database:  primaria
+
+  Ready for Switchover:  Yes
+  Ready for Failover:    Yes (Primary Running)
+
+  Flashback Database Status:
+    primaria:  On
+    espera  :  On
+
+  Capacity Information:
+    Database  Instances        Threads
+    primaria  2                2
+    espera    2                2
+
+  Managed by Clusterware:
+    primaria:  YES
+    espera  :  YES
+
+  Temporary Tablespace File Information:
+    primaria TEMP Files:  1
+    espera TEMP Files:    1
+
+  Data file Online Move in Progress:
+    primaria:  No
+    espera:    No
+
+  Standby Apply-Related Information:
+    Apply State:      Running
+    Apply Lag:        0 seconds (computed 0 seconds ago)
+    Apply Delay:      0 minutes
+
+  Transport-Related Information:
+    Transport On:  Yes
+    Gap Status:    No Gap
+    Transport Lag:  0 seconds (computed 0 seconds ago)
+    Transport Status:  Success
+
+  Log Files Cleared:
+    primaria Standby Redo Log Files:  Cleared
+    espera Online Redo Log Files:     Cleared
+    espera Standby Redo Log Files:    Available
+
+  Current Log File Groups Configuration:
+    Thread #  Online Redo Log Groups  Standby Redo Log Groups Status
+              (primaria)              (espera)
+    1         2                       3                       Sufficient SRLs
+    2         2                       3                       Sufficient SRLs
+
+  Future Log File Groups Configuration:
+    Thread #  Online Redo Log Groups  Standby Redo Log Groups Status
+              (espera)                (primaria)
+    1         2                       3                       Sufficient SRLs
+    2         2                       3                       Sufficient SRLs
+
+  Current Configuration Log File Sizes:
+    Thread #   Smallest Online Redo      Smallest Standby Redo
+               Log File Size             Log File Size
+               (primaria)                (espera)
+    1          200 MBytes                200 MBytes
+    2          200 MBytes                200 MBytes
+
+  Future Configuration Log File Sizes:
+    Thread #   Smallest Online Redo      Smallest Standby Redo
+               Log File Size             Log File Size
+               (espera)                  (primaria)
+    1          200 MBytes                200 MBytes
+    2          200 MBytes                200 MBytes
+
+  Apply-Related Property Settings:
+    Property                        primaria Value           espera Value
+    DelayMins                       0                        0
+    ApplyParallel                   AUTO                     AUTO
+    ApplyInstances                  0                        0
+
+  Transport-Related Property Settings:
+    Property                        primaria Value           espera Value
+    LogShipping                     ON                       ON
+    LogXptMode                      ASYNC                    ASYNC
+    Dependency                      <empty>                  <empty>
+    DelayMins                       0                        0
+    Binding                         optional                 optional
+    MaxFailure                      0                        0
+    ReopenSecs                      300                      300
+    NetTimeout                      30                       30
+    RedoCompression                 DISABLE                  DISABLE
+```
+
+Podemos ejecutar un switchover
+
+```
+DGMGRL> switchover to espera
+Performing switchover NOW, please wait...
+Operation requires a connection to database "espera"
+Connecting ...
+Connected to "espera"
+Connected as SYSDBA.
+New primary database "espera" is opening...
+Oracle Clusterware is restarting database "primaria" ...
+Connected to "primaria"
+Connected to "primaria"
+Switchover succeeded, new primary is "espera"
+
+DGMGRL> show configuration
+
+Configuration - configuracion
+
+  Protection Mode: MaxPerformance
+  Members:
+  espera   - Primary database
+    primaria - Physical standby database
+
+Fast-Start Failover:  Disabled
+
+Configuration Status:
+SUCCESS   (status updated 20 seconds ago)
+
+DGMGRL>
+```
